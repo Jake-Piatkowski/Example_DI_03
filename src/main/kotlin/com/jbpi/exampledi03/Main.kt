@@ -1,30 +1,29 @@
 package com.jbpi.exampledi03
 
-import com.jbpi.exampledi03.providers.*
 import io.reactivex.functions.Consumer
+import org.koin.standalone.KoinComponent
+import org.koin.standalone.StandAloneContext.startKoin
+import org.koin.standalone.inject
 
 fun main() {
 
-    val retrofitBuilderProvider = RetrofitBuilderProvider()
-    val okHttpClientBuilderProvider = OkHttpClientBuilderProvider()
-    val httpLoggingInterceptorProvider = HttpLoggingInterceptorProvider()
-    val okHttpClientProvider = OkHttpClientProvider(
-        okHttpClientBuilderProvider.provideOkHttpClientBuilder(),
-        httpLoggingInterceptorProvider.provideHttpLoggingInterceptor()
-    )
-    val gsonProvider = GsonProvider()
-    val retrofitProvider = RetrofitProvider(
-        retrofitBuilderProvider.provideRetrofitBuilder(),
-        okHttpClientProvider.provideOkHttpClient(), gsonProvider.provideGson()
-    )
-    val twitchWebApiServiceProvider = TwitchWebApiServiceProvider(retrofitProvider.provideRetrofit())
-    val streamsDownloader = StreamsDownloader(twitchWebApiServiceProvider.provideTwitchWebApiService())
+    startKoin(listOf(moduleMain))
 
-    streamsDownloader.download(Consumer { apiResponseStreams ->
-        System.out.println("Stream count: " + apiResponseStreams.data.size)
+    StreamsDownloaderApplication()
+}
 
-        for (apiStream in apiResponseStreams.data) {
-            System.out.println(apiStream.title)
-        }
-    })
+class StreamsDownloaderApplication : KoinComponent {
+
+    private val streamsDownloader by inject<StreamsDownloader>()
+
+    init {
+
+        streamsDownloader.download(Consumer { apiResponseStreams ->
+            System.out.println("Stream count: " + apiResponseStreams.data.size)
+
+            for (apiStream in apiResponseStreams.data) {
+                System.out.println(apiStream.title)
+            }
+        })
+    }
 }
